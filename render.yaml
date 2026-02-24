@@ -1,9 +1,12 @@
 services:
   - type: web
-    name: doctor-assistance
+    name: ai-doctor
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn src.main:app --host 0.0.0.0 --port $PORT"
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker src.gradio_app_advanced:app --bind 0.0.0.0:$PORT --workers 2
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
+      - key: GEMINI_API_KEY
+        value: ""
+      - key: GROQ_API_KEY
+        value: ""
