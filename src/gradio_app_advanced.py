@@ -55,8 +55,10 @@ if GROQ_API_KEY:
     except Exception as e:
         print(f"ERROR: Could not configure Groq API: {e}")
         GROQ_API_KEY = None
+        groq_client = None
 else:
     print("INFO: Groq API will use fallback methods due to missing API key")
+    groq_client = None
 
 # Initialize Hugging Face models for free fallback
 image_captioning = None
@@ -178,24 +180,38 @@ def analyze_image_free(image, question_type, language='English', additional_cont
         return "Please upload an image first.", None
     
     try:
-        # Load model on demand
-        caption_model = load_huggingface_model()
-        if caption_model is None:
-            return "Free image analysis model not available. Please try Gemini when quota resets.", None
+        # Check if Groq API is available for fallback
+        if not GROQ_API_KEY or groq_client is None:
+            return "Free image analysis requires Groq API. Please add GROQ_API_KEY to environment variables.", None
         
-        # Get basic image description using BLIP
-        captions = caption_model(image, max_new_tokens=100)
-        image_description = captions[0]['generated_text'] if captions else "Medical image uploaded"
+        # Try to load model on demand - this may fail on memory-constrained systems
+        try:
+            caption_model = load_huggingface_model()
+        except Exception as model_load_error:
+            print(f"WARNING: Failed to load HuggingFace model: {model_load_error}")
+            caption_model = None
+        
+        if caption_model is None:
+            # Fallback: Use the image filename or basic inference without model
+            image_description = "Medical image uploaded for analysis"
+        else:
+            # Get basic image description using BLIP
+            try:
+                captions = caption_model(image, max_new_tokens=100)
+                image_description = captions[0]['generated_text'] if captions else "Medical image uploaded"
+            except Exception as caption_error:
+                print(f"WARNING: Failed to generate caption: {caption_error}")
+                image_description = "Medical image uploaded for analysis"
         
         # Create a detailed prompt for Groq to analyze based on the description
         context = f"""{get_language_instruction(language)}
 
-You are a board-certified medical doctor providing comprehensive analysis. Image shows: "{image_description}"
+You are a board-certified medical doctor providing comprehensive analysis. 
 
 {additional_context if additional_context.strip() else ""}
 
 Provide DETAILED medical analysis:
-1. CLINICAL FINDINGS: Describe what you see in the image (location, size, color, shape, texture)
+1. CLINICAL FINDINGS: Describe likely visible characteristics (location, size, color, shape, texture)
 2. DIFFERENTIAL DIAGNOSIS: Most likely condition (confidence %), alternative possibilities with reasoning
 3. TREATMENT RECOMMENDATIONS: Specific medicines with exact doses, frequency, duration, and side effects
 4. URGENCY ASSESSMENT: Emergency/Urgent/Routine with clear reasoning
@@ -205,19 +221,23 @@ Provide DETAILED medical analysis:
 Be thorough and professional. Include specific medicine names and dosages."""
 
         # DETAILED Groq analysis for comprehensive medical report
-        response = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": context}],
-            max_tokens=600,  # Increased for detailed analysis
-            temperature=0.1  # Very low for consistency and accuracy
-        )
-        
-        analysis = response.choices[0].message.content.replace('#', '').replace('*', '')
-        
-        return analysis, None
+        try:
+            response = groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": context}],
+                max_tokens=600,  # Increased for detailed analysis
+                temperature=0.1  # Very low for consistency and accuracy
+            )
+            
+            analysis = response.choices[0].message.content.replace('#', '').replace('*', '')
+            return analysis, None
+        except Exception as groq_error:
+            print(f"ERROR: Groq API failed: {groq_error}")
+            return f"Analysis failed: {str(groq_error)[:100]}. Please check API configuration.", None
         
     except Exception as e:
-        return f"Free analysis error: {str(e)}. Please try Gemini when quota resets.", None
+        print(f"ERROR in analyze_image_free: {str(e)}")
+        return f"Free analysis error: {str(e)[:100]}. Please try Gemini when quota resets.", None
 
 def get_language_instruction(language):
     """Get language-specific instruction for AI with strict enforcement"""
@@ -469,14 +489,22 @@ def analyze_and_speak(image, question_type, language, gender, additional_context
     """Parallel image analysis and voice generation with context - OPTIMIZED VERSION"""
     #print(f"Starting analyze_and_speak with question_type={question_type}, language={language}, gender={gender}")
     
-    analysis_text, _ = analyze_image(image, question_type, language, additional_context)
+    try:
+        analysis_text, _ = analyze_image(image, question_type, language, additional_context)
+    except Exception as e:
+        print(f"ERROR: Image analysis failed: {str(e)}")
+        analysis_text = None
     
     #print(f"Image analysis completed, text length: {len(analysis_text) if analysis_text else 0} characters")
     
     if not analysis_text:
-        return "Failed to generate analysis", None
+        return "Failed to generate analysis. Please check API keys and try again.", None
     
-    audio_file = generate_voice(analysis_text, language, gender)
+    try:
+        audio_file = generate_voice(analysis_text, language, gender)
+    except Exception as e:
+        print(f"ERROR: Voice generation failed: {str(e)}")
+        audio_file = None
     
     #print(f"Voice generation completed, audio_file: {audio_file}")
     
@@ -674,21 +702,33 @@ async def api_analyze_image(
     try:
         image_bytes = await image.read()
         pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    except Exception:
+    except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid image file.")
 
-    analysis_text, audio_path = analyze_and_speak(
-        pil_image,
-        analysis_type,
-        language,
-        gender,
-        additional_context,
-    )
-
-    return {
-        "analysis": analysis_text,
-        "audio_path": audio_path,
-    }
+    try:
+        analysis_text, audio_path = analyze_and_speak(
+            pil_image,
+            analysis_type,
+            language,
+            gender,
+            additional_context,
+        )
+        
+        if not analysis_text:
+            raise HTTPException(status_code=500, detail="Failed to analyze image. Please ensure Gemini API key is configured.")
+        
+        return {
+            "analysis": analysis_text,
+            "audio_path": audio_path,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR in image analysis: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to analyze image: {str(e)[:100]}"
+        )
 
 
 @app.get("/api/audio")
