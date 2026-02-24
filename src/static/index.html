@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Doctor Medical Assistance</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">+</div>
+        <div>
+          <h1>AI Doctor Medical Assistance</h1>
+          <p>Professional Multilingual Medical Assistant</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="chip">Gemini · Groq</span>
+        <span class="chip chip-outline">Image · Text · Audio</span>
+      </div>
+    </header>
+
+    <section class="disclaimer">
+      <h2>Important Medical Disclaimer</h2>
+      <p>
+        This AI provides general medical information only and does <strong>not</strong>
+        replace consultation with a licensed healthcare professional.
+      </p>
+      <p>
+        Always consult a doctor for diagnosis, prescriptions, and emergency situations.
+      </p>
+    </section>
+
+    <main class="layout">
+      <section class="card card-left">
+        <h3>Upload Medical Image</h3>
+        <p class="section-subtitle">
+          X‑ray, scan, skin condition photo, or any medical image.
+        </p>
+
+        <div class="form-grid">
+          <div class="form-group full">
+            <label for="imageInput">Medical image</label>
+            <div id="dropZone" class="dropzone">
+              <input id="imageInput" type="file" accept="image/*" hidden />
+              <div class="dropzone-content">
+                <span class="drop-icon">📷</span>
+                <p>Click to select or drag &amp; drop an image here</p>
+                <span class="drop-hint">Supported: JPG, PNG, JPEG</span>
+              </div>
+            </div>
+            <div id="imagePreviewWrapper" class="image-preview-wrapper hidden">
+              <img id="imagePreview" alt="Preview" />
+              <button id="clearImageBtn" type="button" class="btn btn-ghost btn-small">
+                Remove image
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label for="languageSelect">Language</label>
+            <select id="languageSelect">
+              <option value="English">English</option>
+              <option value="Hindi">हिंदी (Hindi)</option>
+              <option value="Hinglish">Hinglish (Hindi + English)</option>
+              <option value="Telugu">తెలుగు (Telugu)</option>
+              <option value="Chhattisgarhi">छत्तीसगढ़ी (Chhattisgarhi)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="analysisType">Analysis type</label>
+            <select id="analysisType">
+              <option value="Full Analysis">Full Analysis</option>
+              <option value="Symptoms Only">Symptoms Only</option>
+              <option value="Diagnosis">Diagnosis</option>
+              <option value="Treatment">Treatment</option>
+              <option value="Prevention">Prevention</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="voiceGender">Voice gender</label>
+            <select id="voiceGender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label for="contextInput">Additional context (optional)</label>
+            <textarea
+              id="contextInput"
+              rows="3"
+              placeholder="Describe symptoms, duration, medical history, medications, or any specific questions..."
+            ></textarea>
+          </div>
+        </div>
+
+        <button id="analyzeBtn" type="button" class="btn btn-primary btn-full">
+          <span class="btn-label">⚡ Analyze Image &amp; Generate Report</span>
+          <span class="btn-spinner hidden" id="btnSpinner"></span>
+        </button>
+
+        <p class="helper-text">
+          Your image is processed locally and sent securely to the AI models. No data is stored permanently.
+        </p>
+      </section>
+
+      <section class="card card-right">
+        <div class="tabs">
+          <button class="tab active" data-tab="report">Medical Report</button>
+          <button class="tab" data-tab="audio">Audio Summary</button>
+        </div>
+
+        <div id="tab-report" class="tab-panel active">
+          <div class="report-header">
+            <h3>Detailed Medical Analysis</h3>
+            <button id="copyReportBtn" type="button" class="btn btn-ghost btn-small">
+              Copy report
+            </button>
+          </div>
+          <pre id="reportOutput" class="report-output" aria-live="polite">
+Upload an image and click "Analyze" to see the full medical report here.</pre
+          >
+        </div>
+
+        <div id="tab-audio" class="tab-panel">
+          <h3>Audio Report</h3>
+          <p class="section-subtitle">
+            Listen to the explanation and prescription details in your selected language.
+          </p>
+
+          <audio id="audioPlayer" controls class="audio-player hidden"></audio>
+          <p id="audioHint" class="helper-text">
+            Run an analysis first. If audio is generated, it will appear here automatically.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>
+        <strong>Languages:</strong>
+        English · हिंदी · Hinglish · తెలుగు · छत्तीसगढ़ी
+      </p>
+      <p>
+        <strong>Note:</strong> For educational and informational purposes only. Not a substitute for emergency care.
+      </p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
+

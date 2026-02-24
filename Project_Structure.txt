@@ -1,0 +1,45 @@
+Doctor Assistance AI Application
+├── main.py                    # Main entry point
+├── requirements.txt          # Dependencies
+├── README.md                # Project documentation
+├── .env                     # Environment variables (API keys)
+├── src/                     # Source code
+│   ├── gradio_app_advanced.py  # Main Gradio application
+│   ├── doctor_brain.py         # Medical knowledge base
+│   ├── doctor_voice.py         # Voice processing module
+│   ├── doctors_brain.py        # AI processing logic
+│   └── patient_voice.py        # Patient interaction module
+├── assets/                  # Media files
+│   ├── audio_outputs/          # Generated audio files
+│   ├── doctor_voice.mp3        # Doctor voice sample
+│   ├── edge_tts_*              # Edge TTS samples
+│   ├── gtts_*                  # Google TTS samples
+│   ├── medical_*               # Medical advice samples
+│   ├── patient_voice_test.mp3  # Patient voice test
+│   ├── test_tts.mp3           # TTS test file
+│   └── images.jpeg            # Images
+├── config/                  # Configuration
+│   ├── .env                   # Environment variables
+│   └── images.jpeg            # Config images
+├── tests/                   # Test files
+│   ├── test_analyze_function.py
+│   ├── test_balanced.py
+│   ├── test_current_tts.py
+│   ├── test_direct_gtts.py
+│   ├── test_document_speech.py
+│   ├── test_features.py
+│   ├── test_file_path.py
+│   ├── test_final.py
+│   ├── test_full_flow.py
+│   ├── test_gtts.py
+│   ├── test_limits.py
+│   ├── test_performance.py
+│   ├── test_quota.py
+│   ├── test_rate_limit.py
+│   ├── test_return_values.py
+│   ├── test_simple_gtts.py
+│   ├── test_simplified_tts.py
+│   ├── test_tts.py
+│   ├── test_voice_function.py
+│   └── tempCodeRunnerFile.py
+└── docs/                    # Documentation (to be added)
